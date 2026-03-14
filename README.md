@@ -70,8 +70,8 @@ If you prefer to run them separately:
 
 ```bash
 cd backend
-python -m venv venv
-venv\Scripts\activate
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 python main.py
 ```
@@ -100,4 +100,5 @@ This tool is strictly for educational, research, and entertainment purposes. It 
 本工具開發僅供學術研究、程式交流與娛樂參考，**不代表或保證任何中獎機率**。彩券投資具有風險，請理性購買，量力而為。
 
 ---
+
 © 2026 TW Lottery AI

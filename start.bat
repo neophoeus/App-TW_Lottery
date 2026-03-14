@@ -7,7 +7,7 @@ echo       Starting App-TW_Lottery System
 echo ==================================================
 
 echo [1/3] Launching Backend API...
-start "TW_Lottery_Backend" cmd /k "cd /d "%~dp0backend" && venv\Scripts\activate && python main.py"
+start "TW_Lottery_Backend" cmd /k "cd /d "%~dp0backend" && .venv\Scripts\python.exe main.py"
 
 echo [2/3] Launching Frontend UI...
 start "TW_Lottery_Frontend" cmd /k "cd /d "%~dp0frontend" && npm run dev"

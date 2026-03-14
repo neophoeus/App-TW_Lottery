@@ -14,13 +14,12 @@ pause
 echo.
 echo Starting training script...
 cd backend
-if exist venv\Scripts\activate.bat (
-    call venv\Scripts\activate.bat
+if exist .venv\Scripts\python.exe (
+    .venv\Scripts\python.exe train.py
 ) else (
-    echo [WARNING] venv\Scripts\activate.bat not found. Using system default Python.
+    echo [WARNING] .venv\Scripts\python.exe not found. Using system default Python.
+    python train.py
 )
-
-python train.py
 
 echo.
 echo ==================================================
