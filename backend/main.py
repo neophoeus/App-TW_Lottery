@@ -1,8 +1,9 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from core.predictor import LotteryPredictor, RULES
 
-app = FastAPI(title="TW Lottery API", version="1.0.0")
+app = FastAPI(title="TW Lottery API", version="2.0.0")
 
 # CORS
 app.add_middleware(
@@ -56,6 +57,27 @@ def update_data():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# Serve static files from the 'static' directory if it exists
+static_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+if os.path.exists(static_path):
+    from fastapi.staticfiles import StaticFiles
+    app.mount("/", StaticFiles(directory=static_path, html=True), name="static")
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    import sys
+    import webbrowser
+    import threading
+    import time
+
+    # Detect if we should run in reload mode (typically for development)
+    is_reload = "--reload" in sys.argv or "reload" in sys.argv
+    
+    # Automatically open local server URL in browser for portable users
+    if not is_reload:
+        def open_browser():
+            time.sleep(1.5)  # Wait for uvicorn server to bind to port
+            webbrowser.open("http://localhost:8000")
+        threading.Thread(target=open_browser, daemon=True).start()
+
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=is_reload)

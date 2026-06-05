@@ -18,39 +18,53 @@ interface PredictionResponse {
   strategies: StrategyResult[];
 }
 
+// Helper to route API calls based on runtime environment.
+// Routes to backend port 8000 if running on frontend development port 3000.
+const getApiUrl = (path: string): string => {
+  if (typeof window !== 'undefined') {
+    if (window.location.port === '3000') {
+      return `http://127.0.0.1:8000${path}`;
+    }
+  }
+  return path;
+};
+
 export default function Home() {
   const [selectedGame, setSelectedGame] = useState('power');
   const [data, setData] = useState<PredictionResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  const fetchPrediction = useCallback(async (retryCount = 0) => {
+  const fetchPrediction = useCallback(async () => {
     setLoading(true);
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/api/predict/${selectedGame}`);
-      if (!res.ok) throw new Error('Failed to fetch');
-      const json = await res.json();
-      await new Promise(r => setTimeout(r, 600));
-      setData(json);
-    } catch (error) {
-      console.warn(`Fetch prediction failed (attempt ${retryCount + 1}):`, error);
-      if (retryCount < 10) { // Retry up to 10 times for backend startup
-        await new Promise(r => setTimeout(r, 2000));
-        fetchPrediction(retryCount + 1);
-        return;
-      }
-      console.error('All retries failed:', error);
-    } finally {
-      if (retryCount === 0 || data) { // Only stop loading if we got data or exhausted initial flow (recursive calls manage their own loading state)
+    const maxRetries = 10;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const res = await fetch(getApiUrl(`/api/predict/${selectedGame}`));
+        if (!res.ok) throw new Error('Failed to fetch');
+        const json = await res.json();
+        // Artificial delay for smooth UX transition
+        await new Promise(r => setTimeout(r, 600));
+        setData(json);
         setLoading(false);
+        return;
+      } catch (error) {
+        console.warn(`Fetch prediction failed (attempt ${attempt}):`, error);
+        if (attempt < maxRetries) {
+          // Wait 2 seconds before retrying to allow backend service to initialize
+          await new Promise(r => setTimeout(r, 2000));
+        } else {
+          console.error('All retries failed:', error);
+        }
       }
     }
-  }, [selectedGame, data]);
+    setLoading(false);
+  }, [selectedGame]);
 
   const updateData = async () => {
     setUpdating(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/update`, { method: 'POST' });
+      const res = await fetch(getApiUrl(`/api/update`), { method: 'POST' });
       const json = await res.json();
       if (json.status === 'success') {
         alert(`資料更新成功！\n${JSON.stringify(json.details, null, 2)}`);
@@ -67,8 +81,8 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchPrediction(0);
-  }, [selectedGame]); // Only re-fetch on game change, not on fetchPrediction reference change which causes loops with retry logic
+    fetchPrediction();
+  }, [selectedGame]); // Only re-fetch on game change
 
   // Separate Ensemble
   const ensembleStrategy = data?.strategies.find(s => s.name === '綜合預測');
@@ -95,7 +109,7 @@ export default function Home() {
 
           <div className="flex gap-6">
             <button
-              onClick={() => fetchPrediction(0)}
+              onClick={() => fetchPrediction()}
               disabled={loading || updating}
               className="bg-amber-500 hover:bg-amber-400 text-red-900 px-10 py-4 rounded-full font-black text-xl shadow-[0_4px_0_#b45309] active:shadow-none active:translate-y-1 transition-all flex items-center gap-3 border-2 border-amber-300"
             >
@@ -168,7 +182,7 @@ export default function Home() {
                             {num}
                           </div>
                         ))}
-                        {ensembleStrategy?.special > 0 && (
+                        {ensembleStrategy && ensembleStrategy.special > 0 && (
                           <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-amber-500 shadow-[0_8px_16px_rgba(0,0,0,0.3)] flex items-center justify-center font-black text-red-900 text-4xl border-4 border-amber-300 ring-4 ring-red-500/50 ml-2">
                             {ensembleStrategy.special}
                           </div>
@@ -209,7 +223,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="mt-24 text-center border-t-2 border-red-900 pt-8 pb-8">
           <p className="text-amber-500/60 font-medium">
-            © 2026 TW Lottery AI | 祝您中大獎 ! Good Luck !
+            © 2026 TW Lottery AI v2.0 | 祝您中大獎 ! Good Luck !
           </p>
         </footer>
       </div>

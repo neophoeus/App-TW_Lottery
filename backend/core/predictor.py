@@ -20,6 +20,9 @@ except ImportError:
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 
+# Cache for loaded Keras models to avoid expensive reload on every prediction request
+_MODEL_CACHE = {}
+
 # Game Rules
 RULES = {
     'power': {
@@ -285,7 +288,10 @@ class LotteryPredictor:
             if not os.path.exists(model_path):
                 return {"nums": [], "special": 0, "name": "深度學習", "desc": "尚未訓練模型，請先執行 train.py", "error": True}
                 
-            model = keras.models.load_model(model_path)
+            global _MODEL_CACHE
+            if self.game_key not in _MODEL_CACHE:
+                _MODEL_CACHE[self.game_key] = keras.models.load_model(model_path)
+            model = _MODEL_CACHE[self.game_key]
             
             # Prepare last window_size (20) elements
             draws = self.draws[:20] # Latest 20

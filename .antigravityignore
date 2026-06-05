@@ -1,0 +1,30 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Node dependencies and build folders
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Cache directories
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.eslintcache
+
+# AI Models (TensorFlow / Keras models)
+backend/models/*.keras
+
+# Documents
+App-TW_Lottery_Installation_Guide.pdf
+
+# Git
+.git/
